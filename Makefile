@@ -1,6 +1,6 @@
 .PHONY: clean distclean
 
-SRC=led1
+SRC=led2
 
 LD=arm-none-eabi-ld
 OBJCOPY=arm-none-eabi-objcopy
