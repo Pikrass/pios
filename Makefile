@@ -1,6 +1,7 @@
 .PHONY: clean distclean
 
-SRC=led2
+MAIN=main
+SRC=main.s libled.s
 
 LD=arm-none-eabi-ld
 OBJCOPY=arm-none-eabi-objcopy
@@ -11,10 +12,10 @@ all: kernel.img
 %.o: %.s
 	$(AS) -mfloat-abi=hard -mcpu=arm1176jz-s $< -o $@
 
-%.elf: %.o
-	$(LD) -T lscript --no-gc-sections $< -o $@
+%.elf: $(SRC:.s=.o)
+	$(LD) -T lscript $^ -o $@
 
-kernel.img: $(SRC).elf
+kernel.img: $(MAIN).elf
 	$(OBJCOPY) $< -O binary $@
 
 clean:
