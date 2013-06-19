@@ -47,7 +47,7 @@ led_status:
 @ r2: temps d'attente entre chaque changement
 @ r3: si la séquence doit se répéter indéfiniment (non-implémenté)
 led_pattern:
-	push   {lr}
+	push   {r4-r11, lr}
 	mov    r4, r0
 	mov    r5, r1
 	mov    r6, r2
@@ -58,9 +58,9 @@ led_pattern:
 	movhi  r5, #32
 
 	@ Récupère l'état actuel de la LED
-	@bl     led_mode_read
-	@bl     led_status
-	@mov    r8, r0
+	@bl    led_mode_read
+	@bl    led_status
+	@mov   r8, r0
 	bl     led_mode_write
 
 	led_pattern$loop:
@@ -72,18 +72,18 @@ led_pattern:
 	beq    led_pattern$off
 
 	led_pattern$on:
-	@cmp    r8, #0
-	@bleq   led_on
-	bl      led_on @debug
-	b       led_pattern$endbit
+	@cmp   r8, #0
+	@bleq  led_on
+	bl     led_on @debug
+	b      led_pattern$endbit
 
 	led_pattern$off:
-	@cmp    r8, #0
-	bl      led_off @debug
-	blne    led_off
+	@cmp   r8, #0
+	bl     led_off @debug
+	blne   led_off
 
 	led_pattern$endbit:
-	@mov    r8, r9
+	@mov   r8, r9
 	subs   r11, r11, #1
 	beq    led_pattern$end
 	mov    r0, r6
@@ -92,7 +92,7 @@ led_pattern:
 	b      led_pattern$nextbit
 
 	led_pattern$end:
-	pop    {pc}
+	pop    {r4-r11, pc}
 
 @ Attend un temps donné dans r0
 _wait:
