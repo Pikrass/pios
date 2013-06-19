@@ -38,7 +38,9 @@ led_off:
 led_status:
 	ldr    r1, =gpio_ctrl
 	ldr    r0, [r1, #0x34]
-	mvn    r0, r0
+	cmp    r0, #0
+	moveq  r0, #1
+	movne  r0, #0
 	bx     lr
 
 @ Affiche une séquence de positions de led
