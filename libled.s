@@ -60,9 +60,9 @@ led_pattern:
 	movhi  r5, #32
 
 	@ Récupère l'état actuel de la LED
-	@bl    led_mode_read
-	@bl    led_status
-	@mov   r8, r0
+	bl     led_mode_read
+	bl     led_status
+	mov    r8, r0
 	bl     led_mode_write
 
 	led_pattern$loop:
@@ -74,18 +74,16 @@ led_pattern:
 	beq    led_pattern$off
 
 	led_pattern$on:
-	@cmp   r8, #0
-	@bleq  led_on
-	bl     led_on @debug
+	cmp    r8, #0
+	bleq   led_on
 	b      led_pattern$endbit
 
 	led_pattern$off:
-	@cmp   r8, #0
-	bl     led_off @debug
+	cmp    r8, #0
 	blne   led_off
 
 	led_pattern$endbit:
-	@mov   r8, r9
+	mov    r8, r9
 	subs   r11, r11, #1
 	beq    led_pattern$end
 	mov    r0, r6
