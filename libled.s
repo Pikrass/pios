@@ -47,7 +47,7 @@ led_status:
  * r0: bit pattern, 0 = off and 1 = on
  * r1: number of bits in the pattern
  * r2: delay between each bit
- * r3: (non implemented) non-zero if the pattern must repeat forever
+ * r3: number of times the pattern must repeat, or 0 if it should repeat forever
  */
 led_pattern:
 	push   {r4-r11, lr}
@@ -86,11 +86,20 @@ led_pattern:
 	led_pattern$endbit:
 	mov    r8, r9
 	subs   r11, r11, #1
-	beq    led_pattern$end
+	beq    led_pattern$endloop
 	mov    r0, r6
 	bl     _wait
 	lsl    r10, #1
 	b      led_pattern$nextbit
+
+	led_pattern$endloop:
+	cmp    r7, #1
+	beq    led_pattern$end
+	cmp    r7, #0
+	subne  r7, r7, #1
+	mov    r0, r6
+	bl     _wait
+	b      led_pattern$loop
 
 	led_pattern$end:
 	pop    {r4-r11, pc}
