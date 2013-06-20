@@ -43,11 +43,11 @@ led_status:
 	movne  r0, #0
 	bx     lr
 
-/* Affiche une séquence de positions de led
- * r0: motif de bits, 0 pour éteint et 1 pour allumé
- * r1: nombre de bits utilisés (de poids faible à poids fort)
- * r2: temps d'attente entre chaque changement
- * r3: si la séquence doit se répéter indéfiniment (non-implémenté)
+/* Make the led blink in a specified pattern
+ * r0: bit pattern, 0 = off and 1 = on
+ * r1: number of bits in the pattern
+ * r2: delay between each bit
+ * r3: (non implemented) non-zero if the pattern must repeat forever
  */
 led_pattern:
 	push   {r4-r11, lr}
@@ -56,19 +56,19 @@ led_pattern:
 	mov    r6, r2
 	mov    r7, r3
 	
-	// Bloque r5 à 32
+	// Limit r5 to 32
 	cmp    r5, #32
 	movhi  r5, #32
 
-	// Récupère l'état actuel de la LED
+	// Get the current led status
 	bl     led_mode_read
 	bl     led_status
 	mov    r8, r0
 	bl     led_mode_write
 
 	led_pattern$loop:
-	mov    r10, #1  // masque roulant
-	mov    r11, r5  // itérateur
+	mov    r10, #1  // bitmask
+	mov    r11, r5  // iterator
 
 	led_pattern$nextbit:
 	ands   r9, r4, r10
@@ -95,7 +95,9 @@ led_pattern:
 	led_pattern$end:
 	pop    {r4-r11, pc}
 
-// Attend un temps donné dans r0
+/* Waste some time
+ * r0: number of iterations
+ */
 _wait:
 	cmp    r0, #0
 	bxeq   lr
