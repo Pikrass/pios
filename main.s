@@ -37,9 +37,8 @@ _start:
 		col:
 			mov    r3, #0
 			cmp    r1, r5
-			bhi    store_color
-			cmp    r2, r4
-			bhi    store_color
+			cmplo  r2, r4
+			bhs    store_color
 
 			get_color
 
