@@ -18,7 +18,7 @@
 .endm
 
 _start:
-	mov    sp, #0x10000
+	mov    sp, #0x8000
 
 	mov    r0, #1024
 	mov    r1, #768
