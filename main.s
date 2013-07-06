@@ -1,14 +1,14 @@
-.section .rodata
-	.equ pattern_ok,    0b00011111
-	.equ pattern_error, 0b00010101
-	.equ delay, 0x400000
+.equ pattern_ok,    0b00011111
+.equ pattern_error, 0b00010101
+.equ delay, 0x400000
 
-	.equ logo_w, 487
-	.equ logo_h, 211
+.equ logo_w, 487
+.equ logo_h, 211
 
 .section .text
 .globl _start
 .extern led_pattern
+.extern font_draw_char
 
 .macro get_color
 	mul    r3, r1, r4     // r3 = line * width
@@ -54,8 +54,12 @@ _start:
 			cmp    r2, #1024
 			bne    col
 		add      r1, r1, #1
-		cmp      r1, #768
+		cmp      r1, r5
 		bne      line
+
+	mov    r1, #1024
+	mov    r2, #'P'
+	bl     font_draw_char
 			
 	ldr    r0, =pattern_ok
 	mov    r1, #8
