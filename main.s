@@ -11,7 +11,9 @@
 .section .text
 .globl _start
 .extern led_pattern
-.extern font_draw_char
+.extern term_init
+.extern term_create
+.extern term_print_char
 
 .macro get_color
 	mul    r3, r1, r4     // r3 = line * width
@@ -29,6 +31,11 @@ _start:
 	bl     fb_request
 	cmp    r0, #0
 	beq    error
+
+	mov    r1, #1024
+	mov    r2, #768
+	mov    r3, #3
+	bl     term_init
 
 	ldr    r4, =logo_w
 	ldr    r5, =logo_h
@@ -60,9 +67,24 @@ _start:
 		cmp      r1, r5
 		bne      line
 
-	mov    r1, #1024
-	mov    r2, #'P'
-	bl     font_draw_char
+	sub    sp, sp, #20
+	mov    r1, #100
+	mov    r2, #20
+	mov    r3, sp
+	bl     term_create
+
+	mov    r0, sp
+	mov    r1, #'P'
+	bl     term_print_char
+	mov    r0, sp
+	mov    r1, #'i'
+	bl     term_print_char
+	mov    r0, sp
+	mov    r1, #'o'
+	bl     term_print_char
+	mov    r0, sp
+	mov    r1, #'s'
+	bl     term_print_char
 			
 	ldr    r0, =pattern_ok
 	mov    r1, #8

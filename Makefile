@@ -1,7 +1,7 @@
 .PHONY: clean distclean
 
 MAIN=main
-SRC=main.s led.s mailbox.s screen.s font.s
+SRC=main.s led.s mailbox.s screen.s font.s term.s
 
 LD=arm-none-eabi-ld
 OBJCOPY=arm-none-eabi-objcopy
