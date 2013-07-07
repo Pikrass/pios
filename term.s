@@ -12,6 +12,7 @@ _term_depth:    .word
 .globl term_init
 .globl term_create
 .globl term_print_char
+.globl term_printf
 
 /* Initialise the terminal module.
  * r0: start address of the framebuffer
@@ -68,18 +69,56 @@ term_print_char:
 
 	bl     font_draw_char
 
-	// Increment the position
-	add    r5, r5, #1
-	ldr    r7, [r4, #4]   // width
-	cmp    r5, r7
-	strne  r5, [r4, #12]  // x
-	bne    term_print_char$end
+	mov    r0, r4
+	bl     term_cursor_forward
 
-	mov    r5, #0
-	str    r5, [r4, #12]  // x
-	// FIXME: check for last line
-	add    r6, r6, #1
-	str    r6, [r4, #16]  // y
-
-	term_print_char$end:
 	pop    {r4-r8, pc}
+
+
+/* Move the cursor forward
+ * r0: address of terminfo
+ */
+term_cursor_forward:
+	ldr    r1, [r0, #4]
+	ldr    r2, [r0, #12]
+	add    r2, r2, #1
+	cmp    r1, r2
+	strne  r2, [r0, #12]
+	bxne   lr
+
+	mov    r2, #0
+	str    r2, [r0, #12]
+	// FIXME: check for last line
+	ldr    r2, [r0, #16]
+	add    r2, r2, #1
+	str    r2, [r0, #16]  // y
+	bx     lr
+
+/* Print a string to the terminal
+ * r0: terminfo address
+ * r1: address of a null-terminated string
+ */
+term_printf:
+	push   {r4 - r6, lr}
+	mov    r4, r0
+	mov    r5, r1
+	ldrb   r6, [r5]
+
+	term_printf$char:
+	cmp    r6, #0x20
+	bne    term_printf$char_print
+	bl     term_cursor_forward
+	b      term_printf$next
+
+	term_printf$char_print:
+	mov    r0, r4
+	mov    r1, r6
+	bl     term_print_char
+
+	term_printf$next:
+	add    r5, r5, #1
+	ldrb   r6, [r5]
+	cmp    r6, #0
+	bne    term_printf$char
+
+	pop    {r4 - r6, pc}

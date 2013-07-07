@@ -6,14 +6,16 @@
 .equ logo_h, 211
 
 .data
-	logo:   .incbin "logo.bin"
+	.align 2
+	welcome: .asciz "Welcome to Pios!"
+	logo:    .incbin "logo.bin"
 
 .section .text
 .globl _start
 .extern led_pattern
 .extern term_init
 .extern term_create
-.extern term_print_char
+.extern term_printf
 
 .macro get_color
 	mul    r3, r1, r4     // r3 = line * width
@@ -74,17 +76,8 @@ _start:
 	bl     term_create
 
 	mov    r0, sp
-	mov    r1, #'P'
-	bl     term_print_char
-	mov    r0, sp
-	mov    r1, #'i'
-	bl     term_print_char
-	mov    r0, sp
-	mov    r1, #'o'
-	bl     term_print_char
-	mov    r0, sp
-	mov    r1, #'s'
-	bl     term_print_char
+	ldr    r1, =[welcome]
+	bl     term_printf
 			
 	ldr    r0, =pattern_ok
 	mov    r1, #8
