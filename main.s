@@ -5,6 +5,9 @@
 .equ logo_w, 487
 .equ logo_h, 211
 
+.data
+	logo:   .incbin "logo.bin"
+
 .section .text
 .globl _start
 .extern led_pattern
@@ -30,7 +33,7 @@ _start:
 	ldr    r4, =logo_w
 	ldr    r5, =logo_h
 	mov    r6, #3
-	adr    r7, logo
+	ldr    r7, =[logo]
 	mov    r1, #0      // Current line
 	line:
 		mov    r2, #0  // Current column
@@ -76,6 +79,3 @@ _start:
 
 loop:
 	b      loop
-
-.ltorg
-logo:   .incbin "logo.bin"
