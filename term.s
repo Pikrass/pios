@@ -86,12 +86,23 @@ term_cursor_forward:
 	strne  r2, [r0, #12]
 	bxne   lr
 
-	mov    r2, #0
-	str    r2, [r0, #12]
-	// FIXME: check for last line
-	ldr    r2, [r0, #16]
-	add    r2, r2, #1
-	str    r2, [r0, #16]  // y
+	push   {lr}
+	bl     term_cursor_newline
+	pop    {pc}
+
+/* Move the cursor down a line and rewind it to the first column
+ * r0: address of terminfo
+ */
+term_cursor_newline:
+	mov    r1, #0
+	str    r1, [r0, #12]
+
+	ldr    r1, [r0, #16]
+	ldr    r2, [r0, #8]
+	add    r1, r1, #1
+	cmp    r1, r2
+	moveq  r1, #0        // For now, we just start again at the first line
+	strne  r1, [r0, #16]
 	bx     lr
 
 /* Print a string to the terminal
@@ -105,9 +116,15 @@ term_printf:
 	ldrb   r6, [r5]
 
 	term_printf$char:
-	cmp    r6, #0x20
-	bne    term_printf$char_print
+	cmp    r6, #' '
+	bne    term_printf$char_test_newline
 	bl     term_cursor_forward
+	b      term_printf$next
+
+	term_printf$char_test_newline:
+	cmp    r6, #'\n'
+	bne    term_printf$char_print
+	bl     term_cursor_newline
 	b      term_printf$next
 
 	term_printf$char_print:

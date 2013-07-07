@@ -7,7 +7,10 @@
 
 .data
 	.align 2
-	welcome: .asciz "Welcome to Pios!"
+	welcome: .ascii "Welcome to Pios, the little program wishing to become a "
+	         .ascii "full operating system some day. But for now it barely "
+	         .ascii "knows how to print a string, so... here it is!\n\n"
+	         .asciz "... You can turn off the Pi now."
 	logo:    .incbin "logo.bin"
 
 .section .text
