@@ -22,3 +22,8 @@ clean:
 	rm -f *.o *.elf
 distclean: clean
 	rm -f kernel.img
+
+
+# Dependencies
+main.s: logo.bin
+font.s: font.bin
