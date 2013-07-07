@@ -32,8 +32,8 @@ font_get_char:
 /* Copy the character image to a framebuffer
  * Assumes a color depth of 3 bytes.
  *
- * r0: base address of the framebuffer
- * r1: number of columns in the framebuffer
+ * r0: address in the framebuffer
+ * r1: number of columns of the framebuffer
  * r2: ascii char
  */
 font_draw_char:
