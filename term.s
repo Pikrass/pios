@@ -3,10 +3,10 @@
 
 .data
 .align 4
-_term_fb_start: .word
-_term_fb_w:     .word
-_term_fb_h:     .word
-_term_depth:    .word
+_term_fb_start: .word 0xff
+_term_fb_w:     .word 0xff
+_term_fb_h:     .word 0xff
+_term_depth:    .word 0xff
 
 .section .text
 .globl term_init
