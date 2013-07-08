@@ -107,13 +107,16 @@ term_cursor_newline:
 
 /* Print a string to the terminal
  * r0: terminfo address
- * r1: address of a null-terminated string
+ * r1: address of a null-terminated format string
+ * r2, r3, stack: arguments for the format string
  */
 term_printf:
-	push   {r4 - r6, lr}
+	push   {r2, r3}
+	push   {r4 - r7, lr}
 	mov    r4, r0
 	mov    r5, r1
 	ldrb   r6, [r5]
+	add    r7, sp, #20
 
 	term_printf$char:
 	cmp    r6, #' '
@@ -123,9 +126,37 @@ term_printf:
 
 	term_printf$char_test_newline:
 	cmp    r6, #'\n'
-	bne    term_printf$char_print
+	bne    term_printf$char_test_special
 	bl     term_cursor_newline
 	b      term_printf$next
+
+	term_printf$char_test_special:
+	cmp    r6, #'%'
+	bne    term_printf$char_print
+
+	// --- Handling of % sequences ---
+
+	add    r5, r5, #1
+	ldrb   r6, [r5]
+	cmp    r6, #0
+	beq    term_printf$end
+
+	cmp    r6, #'%'
+	beq    term_printf$char_print
+
+	cmp    r6, #'x'
+	beq    term_printf$char_call_x
+
+	b      term_printf$next
+
+	term_printf$char_call_x:
+	mov    r0, r4
+	ldr    r1, [r7]
+	add    r7, r7, #4
+	bl     term_print_hex
+	b      term_printf$next
+
+	// -------------------------------
 
 	term_printf$char_print:
 	mov    r0, r4
@@ -138,4 +169,37 @@ term_printf:
 	cmp    r6, #0
 	bne    term_printf$char
 
-	pop    {r4 - r6, pc}
+	term_printf$end:
+	pop    {r4 - r7, lr}
+	add    sp, sp, #8
+	bx     lr
+
+/* Print a number in hexadecimal (lowercase)
+ * r0: terminfo address
+ * r1: the number to print
+ */
+term_print_hex:
+	push   {lr}
+	sub    sp, sp, #12
+	add    r2, sp, #11  // Pointer to first char
+	mov    r3, #0
+	strb   r3, [r2]
+
+	term_print_hex$char:
+	and    r3, r1, #0xf
+	cmp    r3, #10
+	addlo  r3, #0x30
+	addhs  r3, #0x57
+
+	sub    r2, r2, #1
+	strb   r3, [r2]
+
+	lsr    r1, #4
+	cmp    r1, #0
+	bne    term_print_hex$char
+
+	mov    r1, r2
+	bl     term_printf
+
+	add    sp, sp, #12
+	pop    {pc}
