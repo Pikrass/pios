@@ -4,6 +4,7 @@
 
 .equ logo_w, 487
 .equ logo_h, 211
+.equ termoffset, logo_h * 1024 * 3
 
 .data
 	.align 2
@@ -19,16 +20,11 @@
 .section .text
 .globl _start
 .extern led_pattern
+.extern fb_request
+.extern fb_draw_image
 .extern term_init
 .extern term_create
 .extern term_printf
-
-.macro get_color
-	mul    r3, r1, r4     // r3 = line * width
-	add    r3, r3, r2     // r3 += col
-	mla    r3, r3, r6, r7 // r3 = r3 * 3 + logo_base
-	ldr    r3, [r3]       // r3 = *r3 (32 bits, but we'll only use the lower 24)
-.endm
 
 _start:
 	mov    sp, #0x8000
@@ -47,36 +43,16 @@ _start:
 	mov    r3, #3
 	bl     term_init
 
-	ldr    r4, =logo_w
-	ldr    r5, =logo_h
-	mov    r6, #3
-	ldr    r7, =[logo]
-	mov    r1, #0      // Current line
-	line:
-		mov    r2, #0  // Current column
-		col:
-			mov    r3, #0
-			cmp    r1, r5
-			cmplo  r2, r4
-			bhs    store_color
 
-			get_color
+	ldr    r0, [sp]
+	ldr    r1, =[logo]
+	ldr    r2, =logo_w
+	ldr    r3, =logo_h
+	bl     fb_draw_image
 
-			store_color:
-			strb   r3, [r0]
-			lsr    r3, #8
-			strb   r3, [r0, #1]
-			lsr    r3, #8
-			strb   r3, [r0, #2]
-
-			add    r0, r0, #3
-			add    r2, r2, #1
-			cmp    r2, #1024
-			bne    col
-		add      r1, r1, #1
-		cmp      r1, r5
-		bne      line
-
+	ldr    r0, [sp]
+	ldr    r1, =termoffset
+	add    r0, r0, r1
 	mov    r1, #100
 	mov    r2, #20
 	add    r3, sp, #4
