@@ -25,6 +25,7 @@
 .extern term_init
 .extern term_create
 .extern term_printf
+.extern hodor_init
 
 _start:
 	mov    sp, #0x8000
@@ -68,7 +69,10 @@ _start:
 	ldr    r3, =0x5678
 	bl     term_printf
 	add    sp, sp, #8
-			
+
+	ldr    r0, [sp]
+	bl     hodor_init
+
 	ldr    r0, =pattern_ok
 	mov    r1, #8
 	ldr    r2, =delay
