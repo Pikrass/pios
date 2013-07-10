@@ -1,18 +1,23 @@
 .PHONY: clean distclean
 
 MAIN=main
-SRC=main.s led.s mailbox.s screen.s font.s term.s debug.s hodor.s
+ASM=init.s led.s mailbox.s screen.s font.s term.s debug.s hodor.s
+C=main.c
 
 LD=arm-none-eabi-ld
 OBJCOPY=arm-none-eabi-objcopy
 AS=arm-none-eabi-as
+CC=arm-none-eabi-gcc
+
+ASFLAGS=-mfloat-abi=hard -mcpu=arm1176jz-s
+CFLAGS=-O2 $(ASFLAGS)
 
 all: kernel.img
 
 %.o: %.s
-	$(AS) -mfloat-abi=hard -mcpu=arm1176jz-s $< -o $@
+	$(AS) $(ASFLAGS) $< -o $@
 
-%.elf: $(SRC:.s=.o)
+%.elf: $(ASM:.s=.o) $(C:.c=.o)
 	$(LD) -T lscript $^ -o $@
 
 kernel.img: $(MAIN).elf
@@ -25,5 +30,5 @@ distclean: clean
 
 
 # Dependencies
-main.s: logo.bin
+init.s: logo.bin
 font.s: font.bin
