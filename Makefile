@@ -1,7 +1,7 @@
 .PHONY: clean distclean
 
 MAIN=main
-ASM=init.s led.s mailbox.s screen.s font.s term.s debug.s hodor.s
+ASM=init.s led.s mailbox.s screen.s font.s term.s debug.s
 C=main.c
 
 LD=arm-none-eabi-ld
