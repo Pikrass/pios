@@ -79,5 +79,29 @@ int sd_init(struct terminfo *term) {
 	}
 	term_printf(term, " acmd41");
 
+
+	// Send CMD2 to get the CID
+	*INTERRUPT = IR_ALL;
+	*ARG1 = 0;
+	*CMDTM = CMD_INDEX(CMD_ALL_SEND_CID) | CMD_RSPNS_136;
+	while(*INTERRUPT == 0);
+	if(*INTERRUPT & IR_ERR) {
+		term_printf(term, " cmd2_err");
+		return 0;
+	}
+	term_printf(term, " cmd2");
+
+	// Send CMD3 to get the RCA
+	*INTERRUPT = IR_ALL;
+	*ARG1 = 0;
+	*CMDTM = CMD_INDEX(CMD_SEND_RELATIVE_ADDR) | CMD_RSPNS_48;
+	while(*INTERRUPT == 0);
+	if(*INTERRUPT & IR_ERR) {
+		term_printf(term, " cmd3_err");
+		return 0;
+	}
+	resp = *RESP0;
+	term_printf(term, " cmd3 resp=0x%x", resp);
+
 	return 1;
 }

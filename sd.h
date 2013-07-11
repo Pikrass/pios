@@ -82,10 +82,12 @@
 
 
 // Commands
-#define CMD_GO_IDLE_STATE 0
-#define CMD_SEND_IF_COND  8
-#define CMD_SEND_OP_COND  41
-#define CMD_APP           55
+#define CMD_GO_IDLE_STATE      0
+#define CMD_ALL_SEND_CID       2
+#define CMD_SEND_RELATIVE_ADDR 3
+#define CMD_SEND_IF_COND       8
+#define CMD_SEND_OP_COND       41
+#define CMD_APP                55
 
 
 #include "term.h"
