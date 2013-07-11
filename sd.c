@@ -10,6 +10,7 @@ void idle(int ms) {
 
 int sd_init(struct terminfo *term) {
 	int tmp, resp, powerup;
+	int rca, csd[4];
 
 	term_printf(term, "SD_INIT:");
 
@@ -102,6 +103,22 @@ int sd_init(struct terminfo *term) {
 	}
 	resp = *RESP0;
 	term_printf(term, " cmd3 resp=0x%x", resp);
+
+	rca = resp & 0xffff0000;
+
+	*INTERRUPT = IR_ALL;
+	*ARG1 = rca;
+	*CMDTM = CMD_INDEX(CMD_SEND_CSD) | CMD_RSPNS_136;
+	while(*INTERRUPT == 0);
+	if(*INTERRUPT & IR_ERR) {
+		term_printf(term, " cmd9_err");
+		return 0;
+	}
+	csd[0] = *RESP0;
+	csd[1] = *RESP1;
+	csd[2] = *RESP2;
+	csd[3] = *RESP3;
+	term_printf(term, " cmd9 csd=0x%x 0x%x 0x%x 0x%x", csd[0], csd[1], csd[2], csd[3]);
 
 	return 1;
 }
