@@ -29,6 +29,12 @@ distclean: clean
 	rm -f kernel.img
 
 
+.mkdepends:
+	gcc -MM $(C) > $@
+
+
 # Dependencies
 init.s: logo.bin
 font.s: font.bin
+
+include .mkdepends
