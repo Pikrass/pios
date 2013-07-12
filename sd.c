@@ -107,6 +107,15 @@ int sd_init(struct sd_card *card) {
 	raw_csd[3] = *RESP3;
 	sd_parse_csd(raw_csd, &card->csd);
 
+	// Send CMD7 to select the card
+	*INTERRUPT = IR_ALL;
+	*ARG1 = card->rca;
+	*CMDTM = CMD_INDEX(CMD_SELECT_CARD) | CMD_RSPNS_48;
+	while(*INTERRUPT == 0);
+	if(*INTERRUPT & IR_ERR) {
+		return 7;
+	}
+
 	return 0;
 }
 
