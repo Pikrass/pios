@@ -9,8 +9,16 @@ void idle(int ms) {
 		--ms;
 }
 
+int sd_send_command(int cmd, int flags, int arg) {
+	*INTERRUPT = IR_ALL;
+	*ARG1 = arg;
+	*CMDTM = CMD_INDEX(cmd) | flags;
+	while(*INTERRUPT == 0);
+	return *INTERRUPT & IR_ERR;
+}
+
 int sd_init(struct sd_card *card) {
-	int tmp, resp, powerup;
+	int resp, powerup;
 	int raw_csd[4];
 
 	// Reset
@@ -31,76 +39,47 @@ int sd_init(struct sd_card *card) {
 	*IRPT_MASK = IR_ALL;
 
 	// Send CMD0
-	*ARG1 = 0;
-	*CMDTM = CMD_INDEX(CMD_GO_IDLE_STATE);// | TM_DAT_CARD_TO_HOST;
-	while(*INTERRUPT == 0);
-	if(*INTERRUPT & IR_ERR)
+	if(sd_send_command(CMD_GO_IDLE_STATE, 0, 0))
 		return 1;
-	*INTERRUPT = IR_ALL;
 
 	// Send CMD8
-	*ARG1 = 0x1aa; // voltage 1, check_pattern 10101010
-	*CMDTM = CMD_INDEX(CMD_SEND_IF_COND) | CMD_RSPNS_48BUSY;
-
-	while((*INTERRUPT & IR_CMD_DONE) == 0);
-
-	tmp = *INTERRUPT;
-	resp = *RESP0;
-	*INTERRUPT = IR_ALL;
-
-	if((tmp & IR_CMD_DONE) == 0 || (tmp & IR_ERR) > 0 || resp != 0x1aa) {
+	if(sd_send_command(CMD_SEND_IF_COND, CMD_RSPNS_48BUSY, 0x1aa))
+		return 2;
+	if(*RESP0 != 0x1aa) {
 		return 2;
 	}
 
 	// Send ACMD41 until powerup bit is received
 	powerup = 0;
 	while(!powerup) {
+		*INTERRUPT = IR_ALL;
 		*ARG1 = 0;
 		*CMDTM = CMD_INDEX(CMD_APP) | TM_DAT_CARD_TO_HOST;
 		while((*INTERRUPT & IR_CMD_DONE) == 0);
-		*INTERRUPT = IR_ALL;
 
 		idle(500);
-		*ARG1 = 0x40ff0000;
-		*CMDTM = CMD_INDEX(CMD_SEND_OP_COND) | CMD_RSPNS_48;
-		while(*INTERRUPT == 0);
-
-		if(*INTERRUPT & IR_ERR) {
+		if(sd_send_command(CMD_SEND_OP_COND, CMD_RSPNS_48, 0x40ff0000))
 			return 3;
-		}
 
 		powerup = (*RESP0 & 0x80000000);
 	}
 	card->type = *RESP0 & 40000000;
 
 	// Send CMD2 to get the CID
-	*INTERRUPT = IR_ALL;
-	*ARG1 = 0;
-	*CMDTM = CMD_INDEX(CMD_ALL_SEND_CID) | CMD_RSPNS_136;
-	while(*INTERRUPT == 0);
-	if(*INTERRUPT & IR_ERR) {
+	if(sd_send_command(CMD_ALL_SEND_CID, CMD_RSPNS_136, 0))
 		return 4;
-	}
 
 	// Send CMD3 to get the RCA
-	*INTERRUPT = IR_ALL;
-	*ARG1 = 0;
-	*CMDTM = CMD_INDEX(CMD_SEND_RELATIVE_ADDR) | CMD_RSPNS_48;
-	while(*INTERRUPT == 0);
-	if(*INTERRUPT & IR_ERR) {
+	if(sd_send_command(CMD_SEND_RELATIVE_ADDR, CMD_RSPNS_48, 0))
 		return 5;
-	}
-	resp = *RESP0;
 
+	resp = *RESP0;
 	card->rca = resp & 0xffff0000;
 
-	*INTERRUPT = IR_ALL;
-	*ARG1 = card->rca;
-	*CMDTM = CMD_INDEX(CMD_SEND_CSD) | CMD_RSPNS_136;
-	while(*INTERRUPT == 0);
-	if(*INTERRUPT & IR_ERR) {
+	// Send CMD9 to get the CSD
+	if(sd_send_command(CMD_SEND_CSD, CMD_RSPNS_136, card->rca))
 		return 6;
-	}
+
 	raw_csd[0] = *RESP0;
 	raw_csd[1] = *RESP1;
 	raw_csd[2] = *RESP2;
