@@ -10,7 +10,7 @@ void idle(int ms) {
 
 int sd_init(struct terminfo *term) {
 	int tmp, resp, powerup;
-	int rca, csd[4];
+	int card_type, rca, csd[4];
 
 	term_printf(term, "SD_INIT:");
 
@@ -79,7 +79,11 @@ int sd_init(struct terminfo *term) {
 		powerup = (*RESP0 & 0x80000000);
 	}
 	term_printf(term, " acmd41");
-
+	card_type = *RESP0 & 40000000;
+	if(card_type)
+		term_printf(term, " scsd");
+	else
+		term_printf(term, " hcsd");
 
 	// Send CMD2 to get the CID
 	*INTERRUPT = IR_ALL;
