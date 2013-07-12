@@ -12,7 +12,9 @@ void *get_logo();
 
 void main() {
 	void *fb, *logo;
+	int err;
 	struct terminfo term;
+	struct sd_card card;
 
 	fb = fb_request(1024, 762, 24);
 	if(fb == 0)
@@ -25,7 +27,17 @@ void main() {
 	term_create(fb + 211*1024*3, 100, 20, &term);
 	term_printf(&term, WELCOME);
 
-	sd_init(&term);
+	if(err = sd_init(&card)) {
+		term_printf(&term, "SD card initialization failed (%x)", err);
+		term_printf(&term, "irpt=0x%x", *INTERRUPT);
+		goto error;
+	}
+
+	int size = (card.csd.c_size + 1) << (card.csd.c_size_mult + card.csd.read_bl_len + 2);
+	term_printf(&term, "SD card initialized: capacity 0x%x (block 0x%x)", size, card.csd.read_bl_len);
 
 	led_pattern(0b00011111, 8, 0x400000, 0);
+
+error:
+	led_pattern(0b00010101, 8, 0x400000, 0);
 }

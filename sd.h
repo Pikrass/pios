@@ -136,9 +136,15 @@ struct csd {
 	unsigned int csd_structure      : 2;
 };
 
+struct sd_card {
+	unsigned int type;
+	unsigned int rca;
+	struct csd csd;
+};
+
 
 #include "term.h"
-int sd_init(struct terminfo *dbg_out);
+int sd_init(struct sd_card *card);
 void sd_parse_csd(int raw[4], struct csd *csd);
 
 #endif
