@@ -1,3 +1,4 @@
+#include "sd_defs.h"
 #include "sd.h"
 
 #include "term.h"

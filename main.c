@@ -29,7 +29,6 @@ void main() {
 
 	if(err = sd_init(&card)) {
 		term_printf(&term, "SD card initialization failed (%x)", err);
-		term_printf(&term, "irpt=0x%x", *INTERRUPT);
 		goto error;
 	}
 
