@@ -10,7 +10,7 @@ AS=arm-none-eabi-as
 CC=arm-none-eabi-gcc
 
 ASFLAGS=-mfloat-abi=hard -mcpu=arm1176jz-s
-CFLAGS=-O0 $(ASFLAGS)
+CFLAGS=-O0 -std=c99 $(ASFLAGS)
 
 all: kernel.img
 
