@@ -46,5 +46,6 @@ struct sd_card {
 
 int sd_init(struct sd_card *card);
 void sd_parse_csd(int raw[4], struct csd *csd);
+int sd_read(struct sd_card *card, int start, int len, void *dest);
 
 #endif

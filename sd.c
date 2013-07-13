@@ -1,6 +1,7 @@
 #include "sd_defs.h"
 #include "sd.h"
 
+#include "dma.h"
 #include "term.h"
 
 void idle(int ms) {
@@ -128,4 +129,33 @@ void sd_parse_csd(int raw[4], struct csd *csd) {
 	csd->nsac               = UNSTUFF_BITS(raw, 96, 8);
 	csd->taac               = UNSTUFF_BITS(raw, 104, 8);
 	csd->csd_structure      = UNSTUFF_BITS(raw, 118, 2);
+}
+
+// For now, start and len are a number of 512-byte blocks
+int sd_read(struct sd_card *card, int start, int len, void *dest) {
+	int bl_addr;
+	struct dma_cb ctrl __attribute__ ((__aligned__(32)));
+
+	if(card->type == 0)
+		start *= 512;
+
+	*BLKSIZECNT = BLKSIZE(512) | BLKCNT(len);
+
+	sd_send_command(CMD_READ_MULTIPLE_BLOCK,
+			TM_BLKCNT_EN | TM_AUTO_CMD_12 | TM_DAT_CARD_TO_HOST |
+			TM_MULTI_BLOCK | CMD_RSPNS_48 | CMD_ISDATA, start);
+
+	ctrl.ti = DMA_TI_INTEN | DMA_TI_WAIT_RESP |
+		DMA_TI_DEST_INC | DMA_TI_DEST_WIDTH |
+		DMA_TI_SRC_DREQ | DMA_TI_PERMAP_EMMC;
+	ctrl.source_ad = IO_TO_BUS(DATA);
+	//ctrl.dest_ad = ARM_TO_BUS(dest);
+	ctrl.dest_ad = dest;
+	ctrl.txfr_len = 512 * len;
+	ctrl.stride = 0;
+	ctrl.nextconbk = 0;
+
+	dma_reset(DMA_CHAN_EMMC);
+
+	return dma_initiate(DMA_CHAN_EMMC, &ctrl);
 }

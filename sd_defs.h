@@ -29,6 +29,10 @@
 #define SPI_INT_SPT    (volatile int*)(EMMC_BASE + 0xf0)
 #define SLOTISR_VER    (volatile int*)(EMMC_BASE + 0xfc)
 
+// BLKSIZECNT
+#define BLKSIZE(x)  (x)
+#define BLKCNT(x)   (x)<<16
+
 // CMDTM
 #define TM_BLKCNT_EN         1<<1
 #define TM_AUTO_CMD_12       1<<2
@@ -82,14 +86,15 @@
 
 
 // Commands
-#define CMD_GO_IDLE_STATE      0
-#define CMD_ALL_SEND_CID       2
-#define CMD_SEND_RELATIVE_ADDR 3
-#define CMD_SELECT_CARD        7
-#define CMD_SEND_IF_COND       8
-#define CMD_SEND_CSD           9
-#define CMD_SEND_OP_COND       41
-#define CMD_APP                55
+#define CMD_GO_IDLE_STATE        0
+#define CMD_ALL_SEND_CID         2
+#define CMD_SEND_RELATIVE_ADDR   3
+#define CMD_SELECT_CARD          7
+#define CMD_SEND_IF_COND         8
+#define CMD_SEND_CSD             9
+#define CMD_READ_MULTIPLE_BLOCK  18
+#define CMD_SEND_OP_COND         41
+#define CMD_APP                  55
 
 
 // Parsing
