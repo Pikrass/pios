@@ -46,7 +46,7 @@ fb_request:
 	barrier
 	cmp    r0, #0
 	movne  r0, #1
-	popne  {r4, pc}
+	popne  {r4, r5, pc}
 
 	fb_request$wait_pointer:
 	ldr    r0, [r4, #32]
