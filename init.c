@@ -70,11 +70,11 @@ void init() {
 	__asm("mcr p15, 0, %[n], c2, c0, 2" : : [n] "r" (0));
 
 	// Activate the MMU
-	//int mmu_reg;
-	//__asm("mrc p15, 0, %[reg], c1, c0, 0" : [reg] "=r" (mmu_reg));
-	//mmu_reg |= 0x800001;
-	//__asm("mcr p15, 0, %[reg], c1, c0, 0" : : [reg] "r" (mmu_reg));
+	int mmu_reg;
+	__asm("mrc p15, 0, %[reg], c1, c0, 0" : [reg] "=r" (mmu_reg));
+	mmu_reg |= 0x800001;
+	__asm("mcr p15, 0, %[reg], c1, c0, 0" : : [reg] "r" (mmu_reg));
 
-	//__asm("mov sp, #0xf0000000");
+	__asm("mov sp, #0xf0000000");
 	main();
 }

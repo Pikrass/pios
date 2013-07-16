@@ -24,7 +24,7 @@ sd.o: sd.c
 	$(LD) -T lscript $^ -o $@
 
 kernel.img: $(MAIN).elf
-	$(OBJCOPY) $< -O binary $@
+	$(OBJCOPY) $< --change-section-lma '.main.*-0xbfff7000' -O binary $@
 
 clean:
 	rm -f *.o *.elf

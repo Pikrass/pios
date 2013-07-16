@@ -1,5 +1,4 @@
-.section .rodata
-	.equ gpio_ctrl, 0x20200000
+.equ gpio_ctrl, 0xf2200000
 
 .section .text
 .globl led_mode_write

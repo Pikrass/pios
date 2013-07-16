@@ -2,11 +2,14 @@ ENTRY(init)
 
 SECTIONS
 {
-	. = 0x8000;
-    .text : { *(.text*) }
-    .rodata : { *(.rodata*) }
-    .data : { *(.data*) }
+	.init 0x8000 : { init.o (.text*) }
 
-	/DISCARD/ :
-	{ * (.ARM.attributes) }
+    .main.text 0xc0000000 : { main.o (.text*); *(.text*) }
+    .main.rodata : { *(.rodata*) }
+	__etext = .;
+
+	. = ALIGN(4096);
+	__data = .;
+    .main.data : { *(.data*) }
+	__edata = .;
 }
