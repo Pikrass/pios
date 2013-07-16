@@ -11,6 +11,8 @@
 
 void *get_logo();
 
+void main() __attribute__((noreturn));
+
 void main() {
 	void *fb, *logo;
 	int err;
