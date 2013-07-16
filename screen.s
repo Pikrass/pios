@@ -35,9 +35,12 @@ fb_request:
 	str    r0, [r4, #8]
 	str    r1, [r4, #12]
 	str    r2, [r4, #20]
-	mov    r5, #0
 
-	orr    r0, r4, #1
+	// Convert from virtual to physical
+	bic    r5, r4, #0xc0000000
+	add    r5, r5, #0x9000
+
+	orr    r0, r5, #1
 	barrier
 	bl     mailbox_write
 	barrier
