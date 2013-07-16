@@ -1,4 +1,10 @@
+# Compilation results
 *.o
 *.elf
 kernel.img
+
+# Generated dependencies
 .mkdepends
+
+# Configuration file for the Pi
+config.txt
