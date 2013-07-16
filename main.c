@@ -19,6 +19,7 @@ void main() {
 	struct terminfo term;
 	struct sd_card card;
 
+	/*
 	fb = fb_request(1024, 762, 24);
 	if(fb == 0)
 		led_pattern(0b00010101, 8, 0x400000, 0);
@@ -29,9 +30,11 @@ void main() {
 	term_init(fb, 1024, 768, 3);
 	term_create(fb + 211*1024*3, 100, 20, &term);
 	term_printf(&term, WELCOME);
+	*/
 
 	atags_find_mem(&term);
 
+	/*
 	if(err = sd_init(&card)) {
 		term_printf(&term, "SD card initialization failed (%x)\n", err);
 		goto error;
@@ -49,6 +52,7 @@ void main() {
 
 	term_printf(&term, "SD read completed\n");
 	term_printf(&term, "First bytes = %x %x %x %x\n", dest[0], dest[1], dest[2], dest[3]);
+	*/
 
 	led_pattern(0b00011111, 8, 0x400000, 0);
 
