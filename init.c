@@ -61,6 +61,9 @@ void init() {
 	// Allocate a page for the kernel stack
 	t1_eff[0xff] = (unsigned int)((void*)t1_000 + 0x1000) | 0x21b;
 
+	// Allocate a page for the kernel initial heap
+	t1_c00[page] = (unsigned int)((void*)t1_000 + 0x2000) | 0x21b;
+
 	// Setup domain 0
 	__asm("mcr p15, 0, %[val], c3, c0, 0" : : [val] "r" (3));
 

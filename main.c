@@ -2,6 +2,7 @@
 #include "term.h"
 #include "led.h"
 #include "sd.h"
+#include "mem.h"
 #include "atags.h"
 
 #define WELCOME "Welcome to Pios, the little program wishing to become a " \
@@ -37,6 +38,8 @@ void main() {
 	term_printf(&term, WELCOME);
 
 	atags_find_mem(&term);
+
+	mem_init();
 
 	/*
 	if(err = sd_init(&card)) {
