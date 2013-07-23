@@ -52,4 +52,6 @@ void main() {
 
 error:
 	led_pattern(0b00010101, 8, 0x400000, 0);
+
+	while(1);
 }
