@@ -29,5 +29,6 @@ struct kheap_chunk {
 void mem_init();
 void *kmalloc(size_t bytes);
 void map_section(unsigned int phy, unsigned int virt, unsigned int flags);
+void *virt_to_phy(void *va);
 
 #endif

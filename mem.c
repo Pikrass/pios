@@ -125,3 +125,42 @@ void unmap_page(void *mapping) {
 	while(map_frame > 5 && F00_TABLE[map_frame-1] == 0)
 		map_frame--;
 }
+
+void *virt_to_phy(void *va) {
+	unsigned int tablei;
+	unsigned int entry, entry_type;
+
+	tablei = ((unsigned int)va & 0xfff00000) >> 20;
+	entry = TOP_TABLE[tablei];
+	entry_type = entry & 0x3;
+
+	switch(entry_type) {
+		case 0:
+		case 3:
+			return (void*)-1;
+		case 2:
+			return (void*)((entry & 0xfff00000) | ((unsigned int)va & 0x000fffff));
+	}
+
+	unsigned int (*tables)[256];
+	unsigned int table_loc = entry & 0xfffffc00;
+	tables = map_page(table_loc, PAGE_RO_NO | PAGE_XN);
+	if(tables == NULL)
+		return (void*)-2;
+
+	tablei = ((unsigned int)va & 0x000ff000) >> 12;
+	entry = tables[(table_loc & 0xc00)>>10][tablei];
+	entry_type = (entry & 0x3);
+
+	unmap_page(tables);
+
+	switch(entry_type) {
+		case 0:
+			return (void*)-1;
+		case 1:
+			return (void*)((entry & 0xffff0000) | ((unsigned int)va & 0x0000ffff));
+		case 2:
+		case 3:
+			return (void*)((entry & 0xfffff000) | ((unsigned int)va & 0x00000fff));
+	}
+}
