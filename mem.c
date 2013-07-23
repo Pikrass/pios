@@ -102,3 +102,26 @@ void map_section(unsigned int phy, unsigned int virt, unsigned int flags) {
 	TOP_TABLE[virt>>20] = phy | flags | 2;
 	__asm("mcr p15, 0, %[addr], c8, c7, 1" : : [addr] "r" (virt));
 }
+
+unsigned short map_frame = 5;
+void *map_page(unsigned int phy, unsigned int flags) {
+	phy &= 0xfffff000;
+
+	if(map_frame < 256) {
+		void *virt = (void*)(0xf0000000 | map_frame << 12);
+		F00_TABLE[map_frame++] = phy | flags | 2;
+		__asm("mcr p15, 0, %[addr], c8, c7, 1" : : [addr] "r" (virt));
+		return virt;
+	}
+	else {
+		//FIXME: look for holes, then allocate a new block, rather than failing
+		return NULL;
+	}
+}
+void unmap_page(void *mapping) {
+	unsigned int page = ((unsigned int)mapping & 0x000ff000) >> 12;
+	F00_TABLE[page] = 0;
+
+	while(map_frame > 5 && F00_TABLE[map_frame-1] == 0)
+		map_frame--;
+}
