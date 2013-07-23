@@ -1,5 +1,8 @@
 #include "mem.h"
 
+#define TOP_TABLE ((unsigned int*)0xf0000000)
+#define F00_TABLE ((unsigned int*)0xf0004c00)
+
 void kheap_init();
 void *kmalloc_chunk(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, size_t bytes);
 void *kmalloc_wilderness(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, size_t bytes);
@@ -91,4 +94,11 @@ void *kmalloc_wilderness(struct kheap_chunk *chunk, struct kheap_chunk **prev_li
 	next->next_free = chunk->next_free;
 
 	return &chunk->next_free;
+}
+
+void map_section(unsigned int phy, unsigned int virt, unsigned int flags) {
+	virt &= 0xfff00000;
+	phy &= 0xfff00000;
+	TOP_TABLE[virt>>20] = phy | flags | 2;
+	__asm("mcr p15, 0, %[addr], c8, c7, 1" : : [addr] "r" (virt));
 }

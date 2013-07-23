@@ -8,9 +8,9 @@ void init() {
 
 	unsigned int *t0 = (unsigned int*)(((unsigned int)&__edata & ~0xc0003fff) + 0x4000);
 	unsigned int *t1_000 = t0 + 4096,
-	             *t1_c00 = t1_000 + 0x100,
-				 *t1_eff = t1_c00 + 0x100,
-				 *t1_f10 = t1_eff + 0x100;
+	             *t1_c00 = t1_000 + 256,
+				 *t1_eff = t1_c00 + 256,
+				 *t1_f00 = t1_eff + 256;
 
 	for(int i=0 ; i<4096 ; ++i) {
 		t0[i] = 0;
@@ -25,14 +25,14 @@ void init() {
 	t0[0x000] = (unsigned int)t1_000 | 1;
 	t0[0xc00] = (unsigned int)t1_c00 | 1;
 	t0[0xeff] = (unsigned int)t1_eff | 1;
-	t0[0xf10] = (unsigned int)t1_f10 | 1;
+	t0[0xf00] = (unsigned int)t1_f00 | 1;
 
 	// Zero out the second-level tables
 	for(int i=0 ; i<0x100 ; ++i) {
 		t1_000[i] = 0;
 		t1_c00[i] = 0;
 		t1_eff[i] = 0;
-		t1_f10[i] = 0;
+		t1_f00[i] = 0;
 	}
 
 	// Produce a 1:1 mapping for pages 0 (irpt/excpt vectors, ATAGS) and 8
@@ -40,10 +40,13 @@ void init() {
 	t1_000[0] = 0x2a;
 	t1_000[8] = 0x821a;
 
-	// Map the tables to 0xf1000000
-	for(int i=0 ; i<5 ; i++) {
-		t1_f10[i] = (unsigned int)((void*)t0 + i*0x1000) | 0x12;
+	// Map the top table to 0xf0000000 - 0xf0003fff
+	for(int i=0 ; i<4 ; i++) {
+		t1_f00[i] = (unsigned int)((void*)t0 + i*0x1000) | 0x12;
 	}
+
+	// Map the second-level tables to 0xf0004000 - 0xf0004fff
+	t1_f00[4] = (unsigned int)((void*)t1_f00) | 0x12;
 
 	// Map c0000000 to 9000, for as many pages as needed up to __etext
 	unsigned int last_text_page = ((unsigned int)&__etext & ~0xc0000000) >> 12;

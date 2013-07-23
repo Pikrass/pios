@@ -16,19 +16,21 @@ void main() __attribute__((noreturn));
 
 void main() {
 	void *fb, *logo;
-	unsigned int *vmap = (unsigned int*)0xf1000000;
 	int err;
 	struct terminfo term;
 	struct sd_card card;
+
+	mem_init();
 
 	fb = fb_request(1024, 762, 24);
 	if(fb == 0)
 		goto error;
 
-	// Map the framebuffer in our address space at 0xf0000000
+	// Map the framebuffer in our address space at 0xf0100000 - 0xf0500000
 	for(int i=0 ; i<4 ; ++i)
-		*(vmap + 0xf00 + i) = (((unsigned int)fb + i*0x100000) & 0xfff00000) | 0x412;
-	fb = (void*)(((unsigned int)fb & ~0xfff00000) | 0xf0000000);
+		map_section((unsigned int)fb + i*0x100000, 0xf0100000 + i*0x100000, SECT_XN | SECT_RW_NO);
+
+	fb = (void*)(((unsigned int)fb & ~0xfff00000) | 0xf0100000);
 
 	logo = get_logo();
 	fb_draw_image(fb, logo, 487, 211);
@@ -38,8 +40,6 @@ void main() {
 	term_printf(&term, WELCOME);
 
 	atags_find_mem(&term);
-
-	mem_init();
 
 	/*
 	if(err = sd_init(&card)) {
