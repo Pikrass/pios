@@ -28,7 +28,7 @@ void main() {
 	term_create(fb + 211*1024*3, 100, 20, &term);
 	term_printf(&term, WELCOME);
 
-	atags_find_mem(&term);
+	parse_atags(&term);
 
 	if(err = sd_init(&card)) {
 		term_printf(&term, "SD card initialization failed (%x)\n", err);
