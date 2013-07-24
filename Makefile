@@ -1,6 +1,5 @@
 .PHONY: clean distclean
 
-MAIN=main
 ASM=led.s mailbox.s screen.s font.s term.s debug.s logo.s
 C=init.c main.c sd.c dma.c atags.c mem.c
 
@@ -10,7 +9,7 @@ AS=arm-none-eabi-as
 CC=arm-none-eabi-gcc
 
 ASFLAGS=-mfloat-abi=hard -mcpu=arm1176jz-s
-CFLAGS=-O2 -std=c99 $(ASFLAGS)
+CFLAGS=-O2 -std=c99 -nostdlib $(ASFLAGS)
 
 all: kernel.img
 
@@ -20,10 +19,11 @@ sd.o: sd.c
 %.o: %.s
 	$(AS) $(ASFLAGS) $< -o $@
 
-%.elf: $(C:.c=.o) $(ASM:.s=.o)
-	$(LD) -T lscript $^ -o $@
+kernel.elf: $(C:.c=.o) $(ASM:.s=.o)
+	$(LD) -T lscript1 $^ -o tmp.elf
+	$(LD) -T lscript2 tmp.elf -o $@
 
-kernel.img: $(MAIN).elf
+kernel.img: kernel.elf
 	$(OBJCOPY) $< --change-section-lma '.main.*-0xbfff7000' -O binary $@
 
 clean:
