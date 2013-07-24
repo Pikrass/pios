@@ -22,7 +22,6 @@ struct atag {
 	};
 };
 
-#include "term.h"
-void atags_find_mem(struct terminfo *term);
+unsigned int atags_get_mem();
 
 #endif

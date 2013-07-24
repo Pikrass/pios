@@ -3,7 +3,6 @@
 #include "led.h"
 #include "sd.h"
 #include "mem.h"
-#include "atags.h"
 
 #define WELCOME "Welcome to Pios, the little program wishing to become a " \
                 "full operating system some day. But for now it barely " \
@@ -38,8 +37,6 @@ void main() {
 	term_init(fb, 1024, 768, 3);
 	term_create(fb + 211*1024*3, 100, 20, &term);
 	term_printf(&term, WELCOME);
-
-	atags_find_mem(&term);
 
 	/*
 	if(err = sd_init(&card)) {
