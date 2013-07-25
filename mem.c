@@ -20,7 +20,7 @@ void kheap_init() {
 	free_chunk->prev_size = 0;
 	free_chunk->size = -1;
 	free_chunk->next_free = NULL;
-	kheap_brk = (struct hheap_chunk*)(((unsigned int)&__edata & 0xfffff000) + 0x2000);
+	kheap_brk = (struct hheap_chunk*)(((unsigned int)&__edata & 0xfffff000) + 0x3000);
 }
 
 void *kmalloc(size_t bytes) {
