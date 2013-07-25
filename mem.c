@@ -1,18 +1,35 @@
 #include "mem.h"
 
+#include "atags.h"
+
 #define TOP_TABLE ((unsigned int*)0xf0000000)
 #define F00_TABLE ((unsigned int*)0xf0004c00)
 
 void kheap_init();
+void page_alloc_init();
+void page_alloc_init_walksection();
+
+void section_used(unsigned int addr);
+void page_used(unsigned int addr);
+
+void *map_page(unsigned int phy, unsigned int flags);
+void unmap_page(void *mapping);
+
 void *kmalloc_chunk(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, size_t bytes);
 void *kmalloc_wilderness(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, size_t bytes);
+
 
 extern void *__edata;
 struct kheap_chunk *free_chunk;
 void *kheap_brk;
 
+unsigned int max_mem;
+unsigned char *page_bitmap;
+
+
 void mem_init() {
 	kheap_init();
+	page_alloc_init();
 }
 
 void kheap_init() {
@@ -21,6 +38,58 @@ void kheap_init() {
 	free_chunk->size = -1;
 	free_chunk->next_free = NULL;
 	kheap_brk = (struct hheap_chunk*)(((unsigned int)&__edata & 0xfffff000) + 0x3000);
+}
+
+void page_alloc_init() {
+	max_mem = atags_get_mem();
+	unsigned int mem = max_mem >> 15; // bytes / (4096*8)
+	page_bitmap = kmalloc(mem);
+
+	for(int i=0 ; i < mem ; ++i)
+		page_bitmap[i] = 0;
+
+	for(int i=0 ; i < 4096 ; ++i) {
+		if(TOP_TABLE[i] & 2)
+			section_used(TOP_TABLE[i]);
+		else if(TOP_TABLE[i] & 1)
+			page_alloc_init_walksection(TOP_TABLE[i]);
+	}
+}
+
+void page_alloc_init_walksection(unsigned int section) {
+	section &= 0xfffffc00;
+	unsigned int *page = map_page(section, PAGE_RO_NO | PAGE_XN);
+
+	if(page == NULL)
+		return;
+
+	unsigned int *table = (unsigned int*)((unsigned int)page | (section & 0xc00));
+
+	for(int i=0 ; i<256 ; ++i) {
+		if(table[i] & 2)
+			page_used(table[i]);
+	}
+
+	unmap_page(page);
+}
+
+void section_used(unsigned int addr) {
+	if(addr >= max_mem)
+		return;
+
+	addr >>= 20;
+	for(int i=0 ; i<32 ; ++i)
+		page_bitmap[32*addr + i] = 0xff;
+}
+
+void page_used(unsigned int addr) {
+	if(addr >= max_mem)
+		return;
+
+	addr >>= 12;
+	char bit = 1 << (addr & 7);
+	addr >>= 3;
+	page_bitmap[addr] |= bit;
 }
 
 void *kmalloc(size_t bytes) {
