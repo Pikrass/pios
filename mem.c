@@ -25,6 +25,7 @@ void *kheap_brk;
 
 unsigned int max_mem;
 unsigned char *page_bitmap;
+unsigned int first_free_page;
 
 
 void mem_init() {
@@ -53,6 +54,21 @@ void page_alloc_init() {
 			section_used(TOP_TABLE[i]);
 		else if(TOP_TABLE[i] & 1)
 			page_alloc_init_walksection(TOP_TABLE[i]);
+	}
+
+	// Skip the range 0x0000 - 0x8000 for the "first free page"
+	for(int i=1 ; i<mem ; ++i) {
+		if(page_bitmap[i] != 0xff) {
+			first_free_page = i*8;
+
+			int mask = 1;
+			while(page_bitmap[i] & mask) {
+				first_free_page++;
+				mask <<= 1;
+			}
+
+			break;
+		}
 	}
 }
 
@@ -90,6 +106,40 @@ void page_used(unsigned int addr) {
 	char bit = 1 << (addr & 7);
 	addr >>= 3;
 	page_bitmap[addr] |= bit;
+}
+
+void page_unused(unsigned int addr) {
+	if(addr >= max_mem)
+		return;
+
+	addr >>= 12;
+	char bit = 1 << (addr & 7);
+	addr >>= 3;
+	page_bitmap[addr] &= ~bit;
+}
+
+void *alloc_phy_pages(size_t num) {
+	// This is a very simple (and dumb) way to manage memory pages. It will be
+	// improved when we need more than a few megs. :)
+
+	void *ret = (void*)(first_free_page << 12);
+
+	for(int i=0 ; i<num ; ++i) {
+		page_used(first_free_page << 12);
+		first_free_page++;
+	}
+
+	return ret;
+}
+
+void free_phy_pages(void *start, int num) {
+	start = (void*)((unsigned int)start & 0xfffff000);
+	for(int i=0 ; i<num ; ++i) {
+		page_unused((unsigned int)start + i*0x1000);
+	}
+
+	while((page_bitmap[(first_free_page-1)/8] & 1<<((first_free_page-1)%8)) == 0)
+		first_free_page--;
 }
 
 void *kmalloc(size_t bytes) {
