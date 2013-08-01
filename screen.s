@@ -1,9 +1,4 @@
-.section .text
-.globl fb_request
-.globl fb_draw_image
-.extern mailbox_write
-.extern mailbox_read
-
+.section .data
 _fb_info:
 	.align 4
 	.int 0 // fb_phy_width
@@ -17,6 +12,12 @@ _fb_info:
 	.int 0 // fb_addr
 	.int 0 // fb_size
 
+.section .text
+.globl fb_request
+.globl fb_draw_image
+.extern mailbox_write
+.extern mailbox_read
+
 .macro barrier
 	mcr    p15, 0, r3, c7, c10, 5
 .endm
@@ -28,15 +29,18 @@ _fb_info:
  */
 fb_request:
 	push   {r4, r5, lr}
-	adr    r4, _fb_info
+	ldr    r4, =_fb_info
 	str    r0, [r4]
 	str    r1, [r4, #4]
 	str    r0, [r4, #8]
 	str    r1, [r4, #12]
 	str    r2, [r4, #20]
-	mov    r5, #0
 
-	orr    r0, r4, #1
+	// Convert from virtual to physical
+	bic    r5, r4, #0xc0000000
+	add    r5, r5, #0x9000
+
+	orr    r0, r5, #1
 	barrier
 	bl     mailbox_write
 	barrier

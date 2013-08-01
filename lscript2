@@ -1,0 +1,14 @@
+ENTRY(init)
+
+SECTIONS
+{
+	.init 0x8000 : { *(.init) }
+	.main.text 0xc0000000 : { *(.main.text) }
+	.main.rodata : { *(.main.rodata) }
+	__etext = .;
+
+	. = ALIGN(4096);
+	__data = .;
+	.main.data : { *(.main.data .bss) }
+	__edata = .;
+}

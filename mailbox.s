@@ -1,3 +1,5 @@
+.equ gpio_mail, 0xf200b880
+
 .section .text
 .globl mailbox_read
 .globl mailbox_write
@@ -6,7 +8,7 @@
  * r0: the channel we're interested in.
  */
 mailbox_read:
-	ldr    r1, =0x2000b880
+	ldr    r1, =gpio_mail
 
 	mailbox_read$wait_status:
 	ldr    r2, [r1, #0x18]
@@ -26,7 +28,7 @@ mailbox_read:
  * r0: the value in the upper 28 bits, the channel in the lower 4 bits
  */
 mailbox_write:
-	ldr    r1, =0x2000b880
+	ldr    r1, =gpio_mail
 
 	mailbox_write$wait_status:
 	ldr    r2, [r1, #0x18]

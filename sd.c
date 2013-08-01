@@ -1,6 +1,7 @@
 #include "sd_defs.h"
 #include "sd.h"
 
+#include "mem.h"
 #include "dma.h"
 #include "term.h"
 
@@ -149,8 +150,7 @@ int sd_read(struct sd_card *card, int start, int len, void *dest) {
 		DMA_TI_DEST_INC | DMA_TI_DEST_WIDTH |
 		DMA_TI_SRC_DREQ | DMA_TI_PERMAP_EMMC;
 	ctrl.source_ad = IO_TO_BUS(DATA);
-	//ctrl.dest_ad = ARM_TO_BUS(dest);
-	ctrl.dest_ad = dest;
+	ctrl.dest_ad = virt_to_phy(dest);
 	ctrl.txfr_len = 512 * len;
 	ctrl.stride = 0;
 	ctrl.nextconbk = 0;

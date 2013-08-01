@@ -1,7 +1,7 @@
 #ifndef SD_DEFS_H
 #define SD_DEFS_H
 
-#define EMMC_BASE      (void*)(0x20300000)
+#define EMMC_BASE      (void*)(0xf2300000)
 #define ARG2           (volatile int*)(EMMC_BASE + 0x00)
 #define BLKSIZECNT     (volatile int*)(EMMC_BASE + 0x04)
 #define ARG1           (volatile int*)(EMMC_BASE + 0x08)

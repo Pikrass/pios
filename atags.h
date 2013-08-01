@@ -28,7 +28,6 @@ struct atag {
 	};
 };
 
-#include "term.h"
-void parse_atags(struct terminfo *term);
+unsigned int atags_get_mem();
 
 #endif
