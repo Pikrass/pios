@@ -32,8 +32,8 @@ distclean: clean
 	rm -f kernel.img
 
 
-.mkdepends:
-	gcc -MM $(C) > $@
+.mkdepends: $(C)
+	gcc -MM $^ > $@
 
 
 # Dependencies
