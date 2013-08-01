@@ -22,12 +22,12 @@ void *kmalloc_wilderness(struct kheap_chunk *chunk, struct kheap_chunk **prev_li
 
 
 extern void *__edata;
-struct kheap_chunk *free_chunk;
-void *kheap_brk;
+struct kheap_chunk *free_chunk = NULL;
+unsigned int kheap_brk = 0;
 
-unsigned int max_mem;
-unsigned char *page_bitmap;
-unsigned int first_free_page;
+unsigned int max_mem = 0;
+unsigned char *page_bitmap = NULL;
+unsigned int first_free_page = 0;
 
 
 void mem_init() {
@@ -40,7 +40,7 @@ void kheap_init() {
 	free_chunk->prev_size = 0;
 	free_chunk->size = -1;
 	free_chunk->next_free = NULL;
-	kheap_brk = (struct hheap_chunk*)(((unsigned int)&__edata & 0xfffff000) + 0x3000);
+	kheap_brk = ((unsigned int)&__edata & 0xfffff000) + 0x3000;
 }
 
 void page_alloc_init() {
@@ -198,7 +198,7 @@ void *kmalloc_chunk(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, s
 }
 
 void *kmalloc_wilderness(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, size_t bytes) {
-	size_t remain = (unsigned int)kheap_brk - (unsigned int)chunk;
+	size_t remain = kheap_brk - (unsigned int)chunk;
 
 	while(remain - 8 < bytes) {
 		//TODO: allocate a page
