@@ -2,7 +2,7 @@
 
 MAIN=main
 ASM=init.s led.s mailbox.s screen.s font.s term.s debug.s
-C=main.c sd.c dma.c atags.c
+C=main.c sd.c dma.c atags.c term_printf.c
 
 LD=arm-none-eabi-ld
 OBJCOPY=arm-none-eabi-objcopy
