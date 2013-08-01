@@ -12,8 +12,10 @@ void page_alloc_init_walksection();
 void section_used(unsigned int addr);
 void page_used(unsigned int addr);
 
-void *map_page(unsigned int phy, unsigned int flags);
-void unmap_page(void *mapping);
+int map_page(unsigned int phy, unsigned int virt, unsigned int flags);
+
+void *map_page_tmp(unsigned int phy, unsigned int flags);
+void unmap_page_tmp(void *mapping);
 
 void *kmalloc_chunk(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, size_t bytes);
 void *kmalloc_wilderness(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, size_t bytes);
@@ -74,7 +76,7 @@ void page_alloc_init() {
 
 void page_alloc_init_walksection(unsigned int section) {
 	section &= 0xfffffc00;
-	unsigned int *page = map_page(section, PAGE_RO_NO | PAGE_XN);
+	unsigned int *page = map_page_tmp(section, PAGE_RO_NO | PAGE_XN);
 
 	if(page == NULL)
 		return;
@@ -86,7 +88,7 @@ void page_alloc_init_walksection(unsigned int section) {
 			page_used(table[i]);
 	}
 
-	unmap_page(page);
+	unmap_page_tmp(page);
 }
 
 void section_used(unsigned int addr) {
@@ -222,8 +224,54 @@ void map_section(unsigned int phy, unsigned int virt, unsigned int flags) {
 	__asm("mcr p15, 0, %[addr], c8, c7, 1" : : [addr] "r" (virt));
 }
 
+unsigned int *next_coarse = NULL;
+unsigned int *alloc_coarse_table() {
+	unsigned int *ret;
+
+	if(next_coarse == NULL) {
+		ret = alloc_phy_pages(1);
+		next_coarse = ret + 0x400;
+	}
+	else {
+		ret = next_coarse;
+		next_coarse += 0x400;
+		if(((unsigned int)next_coarse & 0xfff) == 0)
+			next_coarse = NULL;
+	}
+
+	return ret;
+}
+
+int map_page(unsigned int phy, unsigned int virt, unsigned int flags) {
+	virt &= 0xfffff000;
+	phy &= 0xfffff000;
+
+	unsigned int section = TOP_TABLE[virt>>20];
+	unsigned int *coarse_table_phy;
+	unsigned int *coarse_table;
+
+	switch(section & 3) {
+		case 0:
+			coarse_table_phy = alloc_coarse_table();
+			coarse_table = map_page_tmp((unsigned int)coarse_table_phy, PAGE_RO_NO | PAGE_XN);
+			coarse_table = (unsigned int*)((unsigned int)coarse_table | ((unsigned int)coarse_table_phy & 0xc00));
+			TOP_TABLE[virt>>20] = (unsigned int)coarse_table_phy | 1;
+			break;
+		case 1:
+			coarse_table = map_page_tmp(section, PAGE_RO_NO | PAGE_XN);
+			coarse_table = (unsigned int*)((unsigned int)coarse_table | (section & 0xc00));
+			break;
+		case 2:
+			return 1;
+	}
+
+	coarse_table[(virt&0xff000)>>12] = phy | flags | 1;
+	__asm("mcr p15, 0, %[addr], c8, c7, 1" : : [addr] "r" (virt));
+	return 0;
+}
+
 unsigned short map_frame = 5;
-void *map_page(unsigned int phy, unsigned int flags) {
+void *map_page_tmp(unsigned int phy, unsigned int flags) {
 	phy &= 0xfffff000;
 
 	if(map_frame < 256) {
@@ -237,7 +285,7 @@ void *map_page(unsigned int phy, unsigned int flags) {
 		return NULL;
 	}
 }
-void unmap_page(void *mapping) {
+void unmap_page_tmp(void *mapping) {
 	unsigned int page = ((unsigned int)mapping & 0x000ff000) >> 12;
 	F00_TABLE[page] = 0;
 
@@ -263,7 +311,7 @@ void *virt_to_phy(void *va) {
 
 	unsigned int (*tables)[256];
 	unsigned int table_loc = entry & 0xfffffc00;
-	tables = map_page(table_loc, PAGE_RO_NO | PAGE_XN);
+	tables = map_page_tmp(table_loc, PAGE_RO_NO | PAGE_XN);
 	if(tables == NULL)
 		return (void*)-2;
 
@@ -271,7 +319,7 @@ void *virt_to_phy(void *va) {
 	entry = tables[(table_loc & 0xc00)>>10][tablei];
 	entry_type = (entry & 0x3);
 
-	unmap_page(tables);
+	unmap_page_tmp(tables);
 
 	switch(entry_type) {
 		case 0:
