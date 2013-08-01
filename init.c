@@ -66,7 +66,7 @@ void init() {
 
 	// Allocate two pages for the kernel initial heap
 	for(int i=0 ; i < 2 ; ++i)
-		t1_c00[page++] = (unsigned int)((void*)t1_000 + 0x2000 + i*0x1000) | 0x21b;
+		t1_c00[page++] = (unsigned int)((void*)t1_000 + 0x2000 + i*0x1000) | 0x213;
 
 	// Setup domain 0
 	__asm("mcr p15, 0, %[val], c3, c0, 0" : : [val] "r" (3));

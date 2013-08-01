@@ -1,6 +1,7 @@
 #include "dma_defs.h"
 #include "dma.h"
 
+#include "mem.h"
 #include "barrier.h"
 
 void dma_reset(unsigned int chan) {
@@ -19,7 +20,7 @@ int dma_initiate(unsigned int chan, struct dma_cb *ctrl_block) {
 	ctrl_block->nextconbk = 0;
 
 	dsb();
-	*CONBLK_AD(chan) = ctrl_block;
+	*CONBLK_AD(chan) = virt_to_phy(ctrl_block);
 	*CS(chan) = ACTIVE | END | INT;
 
 	// For the moment, wait until the transfer completes.

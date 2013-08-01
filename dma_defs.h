@@ -1,7 +1,7 @@
 #ifndef DMA_DEFS_H
 #define DMA_DEFS_H
 
-#define DMA_BASE         (volatile void*)(0x20007000)
+#define DMA_BASE         (volatile void*)(0xf2007000)
 #define CS(x)            (volatile int*)(DMA_BASE + (x) * 0x100 + 0x00)
 #define CONBLK_AD(x)     (volatile void**)(DMA_BASE + (x) * 0x100 + 0x04)
 #define TI(x)            (volatile int*)(DMA_BASE + (x) * 0x100 + 0x08)

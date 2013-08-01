@@ -38,7 +38,6 @@ void main() {
 	term_create(fb + 211*1024*3, 100, 20, &term);
 	term_printf(&term, WELCOME);
 
-	/*
 	if(err = sd_init(&card)) {
 		term_printf(&term, "SD card initialization failed (%x)\n", err);
 		goto error;
@@ -47,7 +46,7 @@ void main() {
 	int size = (card.csd.c_size + 1) << (card.csd.c_size_mult + card.csd.read_bl_len + 2);
 	term_printf(&term, "SD card initialized: capacity 0x%x (block 0x%x)\n", size, card.csd.read_bl_len);
 
-	unsigned int *dest = (unsigned int *)0x100000;
+	unsigned int *dest = kmalloc(512, KMALLOC_CONT);
 
 	if(err = sd_read(&card, 0, 1, dest)) {
 		term_printf(&term, "SD read failed (%x)\n", err);
@@ -56,7 +55,6 @@ void main() {
 
 	term_printf(&term, "SD read completed\n");
 	term_printf(&term, "First bytes = %x %x %x %x\n", dest[0], dest[1], dest[2], dest[3]);
-	*/
 
 	led_pattern(0b00011111, 8, 0x400000, 0);
 

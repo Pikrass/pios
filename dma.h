@@ -1,8 +1,7 @@
 #ifndef DMA_H
 #define DMA_H
 
-#define IO_TO_BUS(x)     (void*)((unsigned int)(x) | 0x7e000000)
-#define ARM_TO_BUS(x)    (void*)((unsigned int)(x) | 0xc0000000)
+#define IO_TO_BUS(x)     (void*)((unsigned int)(x) & 0x00ffffff | 0x7e000000)
 
 // Assigned channels
 #define DMA_CHAN_EMMC  0
