@@ -17,8 +17,9 @@ int map_page(unsigned int phy, unsigned int virt, unsigned int flags);
 void *map_page_tmp(unsigned int phy, unsigned int flags);
 void unmap_page_tmp(void *mapping);
 
+int chunk_is_contiguous(const struct kheap_chunk *chunk, size_t bytes);
 void *kmalloc_chunk(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, size_t bytes);
-void *kmalloc_wilderness(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, size_t bytes);
+void *kmalloc_wilderness(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, size_t bytes, unsigned int flags);
 
 
 extern void *__edata;
@@ -46,7 +47,7 @@ void kheap_init() {
 void page_alloc_init() {
 	max_mem = atags_get_mem();
 	unsigned int mem = max_mem >> 15; // bytes / (4096*8)
-	page_bitmap = kmalloc(mem);
+	page_bitmap = kmalloc(mem, 0);
 
 	for(int i=0 ; i < mem ; ++i)
 		page_bitmap[i] = 0;
@@ -158,7 +159,7 @@ int kheap_grow(unsigned int nb_pages) {
 	return 0;
 }
 
-void *kmalloc(size_t bytes) {
+void *kmalloc(size_t bytes, unsigned int flags) {
 	struct kheap_chunk *chunk = free_chunk, *best_fit = (void*)0xffffffff;
 	struct kheap_chunk **prev_list = &free_chunk, **best_prev;
 	size_t best_size = -1;
@@ -172,9 +173,11 @@ void *kmalloc(size_t bytes) {
 		if(chunk->size > bytes+8
 				&& (chunk->size < best_size
 					|| (chunk->size == best_size && chunk < best_fit))) {
-			best_fit = chunk;
-			best_size = chunk->size;
-			best_prev = prev_list;
+			if((flags & KMALLOC_CONT) == 0 || chunk_is_contiguous(chunk, bytes)) {
+				best_fit = chunk;
+				best_size = chunk->size;
+				best_prev = prev_list;
+			}
 		}
 
 		prev_list = &chunk->next_free;
@@ -185,9 +188,32 @@ void *kmalloc(size_t bytes) {
 		return NULL;
 
 	if(best_fit->size == -1)
-		return kmalloc_wilderness(best_fit, best_prev, bytes);
+		return kmalloc_wilderness(best_fit, best_prev, bytes, flags);
 	else
 		return kmalloc_chunk(best_fit, best_prev, bytes);
+}
+
+int chunk_is_contiguous(const struct kheap_chunk *chunk, size_t bytes) {
+	// The wilderness chunk can always produce contiguous chunks
+	if(chunk->size == -1)
+		return 1;
+
+	unsigned int first = ((unsigned int)chunk + 8) & 0xfffff000,
+				 last = ((unsigned int)chunk + bytes + 8) & 0xfffff000;
+
+	if(first == last)
+		return 1;
+
+	unsigned int next_page = (unsigned int)virt_to_phy((void*)first);
+
+	for(unsigned int vpage=first+0x1000 ; vpage <= last ; vpage += 0x1000) {
+		next_page += 0x1000;
+
+		if((unsigned int)virt_to_phy((void*)vpage) != next_page)
+			return 0;
+	}
+
+	return 1;
 }
 
 void *kmalloc_chunk(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, size_t bytes) {
@@ -211,13 +237,33 @@ void *kmalloc_chunk(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, s
 	return &chunk->next_free;
 }
 
-void *kmalloc_wilderness(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, size_t bytes) {
+void *kmalloc_wilderness(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, size_t bytes, unsigned int flags) {
 	size_t remain = kheap_brk - (unsigned int)chunk;
 
-	while(remain - 8 < bytes) {
-		if(kheap_grow(1))
-			return NULL;
-		remain += 0x1000;
+	if(remain - 8 < bytes) {
+		if(flags & KMALLOC_CONT) {
+			// Move the wilderness chunk to the boundary
+			struct kheap_chunk *prev = chunk;
+			chunk = (struct kheap_chunk*)(kheap_brk - 8);
+			chunk->next_free = NULL;
+
+			prev->size = (unsigned int)chunk - (unsigned int)prev + 1;
+			if(prev->size >= 17) {
+				*prev_list = prev;
+				prev_list = &prev->next_free;
+			}
+
+			// Allocate enough pages
+			if(kheap_grow(bytes / 0x1000 + 1))
+				return NULL;
+		}
+		else {
+			while(remain - 8 < bytes) {
+				if(kheap_grow(1))
+					return NULL;
+				remain += 0x1000;
+			}
+		}
 	}
 
 	chunk->size = bytes + 8;
