@@ -144,6 +144,20 @@ void free_phy_pages(void *start, int num) {
 		first_free_page--;
 }
 
+int kheap_grow(unsigned int nb_pages) {
+	void *pages = alloc_phy_pages(nb_pages);
+
+	if(pages == NULL)
+		return 1;
+
+	for(int i=0 ; i<nb_pages ; ++i) {
+		map_page((unsigned int)(pages + i*0x1000), kheap_brk, PAGE_RW_NO | PAGE_XN);
+		kheap_brk += 0x1000;
+	}
+
+	return 0;
+}
+
 void *kmalloc(size_t bytes) {
 	struct kheap_chunk *chunk = free_chunk, *best_fit = (void*)0xffffffff;
 	struct kheap_chunk **prev_list = &free_chunk, **best_prev;
@@ -201,13 +215,19 @@ void *kmalloc_wilderness(struct kheap_chunk *chunk, struct kheap_chunk **prev_li
 	size_t remain = kheap_brk - (unsigned int)chunk;
 
 	while(remain - 8 < bytes) {
-		//TODO: allocate a page
-		return NULL;
+		if(kheap_grow(1))
+			return NULL;
+		remain += 0x1000;
 	}
 
 	chunk->size = bytes + 8;
 
 	struct kheap_chunk *next = (void*)chunk + chunk->size;
+	if((unsigned int)next >= kheap_brk) {
+		if(kheap_grow(1))
+			return NULL;
+	}
+
 	next->prev_size = chunk->size;
 	next->size = -1;
 
