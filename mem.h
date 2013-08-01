@@ -20,6 +20,9 @@
 #define SECT_XN    1<<4
 #define PAGE_XN    1<<0
 
+// kmalloc flags
+#define KMALLOC_CONT 1 // contiguous physical memory
+
 struct kheap_chunk {
 	size_t prev_size;
 	size_t size; // -1 for wilderness chunk, bit 0 high if free
@@ -27,7 +30,7 @@ struct kheap_chunk {
 };
 
 void mem_init();
-void *kmalloc(size_t bytes);
+void *kmalloc(size_t bytes, unsigned int flags);
 void map_section(unsigned int phy, unsigned int virt, unsigned int flags);
 void *virt_to_phy(void *va);
 
