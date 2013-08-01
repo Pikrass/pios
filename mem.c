@@ -6,7 +6,7 @@
 #define F00_TABLE ((unsigned int*)0xf0004c00)
 
 void kheap_init();
-void page_alloc_init();
+void page_alloc_init(struct terminfo *term);
 void page_alloc_init_walksection();
 
 void section_used(unsigned int addr);
@@ -19,7 +19,7 @@ void unmap_page_tmp(void *mapping);
 
 int chunk_is_contiguous(const struct kheap_chunk *chunk, size_t bytes);
 void *kmalloc_chunk(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, size_t bytes);
-void *kmalloc_wilderness(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, size_t bytes, unsigned int flags);
+void *kmalloc_wilderness(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, size_t bytes, unsigned int flags, struct terminfo *term);
 
 
 extern void *__edata;
@@ -31,9 +31,9 @@ unsigned char *page_bitmap = NULL;
 unsigned int first_free_page = 0;
 
 
-void mem_init() {
+void mem_init(struct terminfo *term) {
 	kheap_init();
-	page_alloc_init();
+	page_alloc_init(term);
 }
 
 void kheap_init() {
@@ -44,10 +44,10 @@ void kheap_init() {
 	kheap_brk = ((unsigned int)&__edata & 0xfffff000) + 0x3000;
 }
 
-void page_alloc_init() {
+void page_alloc_init(struct terminfo *term) {
 	max_mem = atags_get_mem();
 	unsigned int mem = max_mem >> 15; // bytes / (4096*8)
-	page_bitmap = kmalloc(mem, 0);
+	page_bitmap = kmalloc(mem, 0, term);
 
 	for(int i=0 ; i < mem ; ++i)
 		page_bitmap[i] = 0;
@@ -159,7 +159,7 @@ int kheap_grow(unsigned int nb_pages) {
 	return 0;
 }
 
-void *kmalloc(size_t bytes, unsigned int flags) {
+void *kmalloc(size_t bytes, unsigned int flags, struct terminfo *term) {
 	struct kheap_chunk *chunk = free_chunk, *best_fit = (void*)0xffffffff;
 	struct kheap_chunk **prev_list = &free_chunk, **best_prev;
 	size_t best_size = -1;
@@ -188,7 +188,7 @@ void *kmalloc(size_t bytes, unsigned int flags) {
 		return NULL;
 
 	if(best_fit->size == -1)
-		return kmalloc_wilderness(best_fit, best_prev, bytes, flags);
+		return kmalloc_wilderness(best_fit, best_prev, bytes, flags, term);
 	else
 		return kmalloc_chunk(best_fit, best_prev, bytes);
 }
@@ -237,8 +237,10 @@ void *kmalloc_chunk(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, s
 	return &chunk->next_free;
 }
 
-void *kmalloc_wilderness(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, size_t bytes, unsigned int flags) {
+void *kmalloc_wilderness(struct kheap_chunk *chunk, struct kheap_chunk **prev_list, size_t bytes, unsigned int flags, struct terminfo *term) {
 	size_t remain = kheap_brk - (unsigned int)chunk;
+
+	term_printf(term, "Selected chunk: 0x%x, wild, next = 0x%x\n", chunk, chunk->next_free);
 
 	if(remain - 8 < bytes) {
 		if(flags & KMALLOC_CONT) {
@@ -254,15 +256,22 @@ void *kmalloc_wilderness(struct kheap_chunk *chunk, struct kheap_chunk **prev_li
 			}
 
 			// Allocate enough pages
-			if(kheap_grow(bytes / 0x1000 + 1))
+			term_printf(term, "Before growing (0x%x pages), chunk->next_free = 0x%x\n", bytes/0x1000 +1, chunk->next_free);
+			if(kheap_grow(bytes / 0x1000 + 1)) {
+				term_printf(term, "Error kheap_grow(0x%x)\n", bytes / 0x1000 +1);
 				return NULL;
+			}
+			term_printf(term, "After growing (0x%x pages), chunk->next_free = 0x%x\n", bytes/0x1000 +1, chunk->next_free);
 		}
 		else {
 			while(remain - 8 < bytes) {
-				if(kheap_grow(1))
+				if(kheap_grow(1)) {
+					term_printf(term, "Error kheap_grow(1)\n");
 					return NULL;
+				}
 				remain += 0x1000;
 			}
+			term_printf(term, "After growing, chunk->next_free = 0x%x\n", chunk->next_free);
 		}
 	}
 
@@ -270,15 +279,23 @@ void *kmalloc_wilderness(struct kheap_chunk *chunk, struct kheap_chunk **prev_li
 
 	struct kheap_chunk *next = (void*)chunk + chunk->size;
 	if((unsigned int)next >= kheap_brk) {
-		if(kheap_grow(1))
+		if(kheap_grow(1)) {
+			term_printf(term, "Error kheap_grow for next\n");
 			return NULL;
+		}
 	}
 
-	next->prev_size = chunk->size;
 	next->size = -1;
+	next->prev_size = chunk->size;
+
+	term_printf(term, "A chunk->next_free = 0x%x\n", chunk->next_free);
+	term_printf(term, "B chunk->next_free = 0x%x\n", chunk->next_free);
 
 	*prev_list = next;
 	next->next_free = chunk->next_free;
+
+	term_printf(term, "C chunk->next_free = 0x%x, next = 0x%x\n", chunk->next_free, next->next_free);
+	term_printf(term, "D chunk->next_free = 0x%x, next = 0x%x\n", chunk->next_free, next->next_free);
 
 	return &chunk->next_free;
 }

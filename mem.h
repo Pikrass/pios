@@ -29,8 +29,9 @@ struct kheap_chunk {
 	struct kheap_chunk *next_free;
 };
 
-void mem_init();
-void *kmalloc(size_t bytes, unsigned int flags);
+#include "term.h"
+void mem_init(struct terminfo *term);
+void *kmalloc(size_t bytes, unsigned int flags, struct terminfo *term);
 void map_section(unsigned int phy, unsigned int virt, unsigned int flags);
 void *virt_to_phy(void *va);
 

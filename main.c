@@ -7,7 +7,8 @@
 #define WELCOME "Welcome to Pios, the little program wishing to become a " \
                 "full operating system some day. But for now it barely " \
                 "knows how to print a string, so... here it is!\n\n"
- 
+
+extern struct kheap_chunk *free_chunk;
 
 void *get_logo();
 
@@ -19,9 +20,8 @@ void main() {
 	struct terminfo term;
 	struct sd_card card;
 
-	mem_init();
-
 	fb = fb_request(1024, 762, 24);
+	//fb = 0x400b0000; //DEBUG qemu
 	if(fb == 0)
 		goto error;
 
@@ -35,8 +35,17 @@ void main() {
 	fb_draw_image(fb, logo, 487, 211);
 
 	term_init(fb, 1024, 768, 3);
-	term_create(fb + 211*1024*3, 100, 20, &term);
+	term_create(fb + 211*1024*3, 100, 30, &term);
 	term_printf(&term, WELCOME);
+
+	mem_init(&term);
+
+	unsigned char *a = kmalloc(5000, 0, &term);
+	a[4950] = 5;
+	term_printf(&term, "Ok (0x%x)\n", a);
+	unsigned char *a2 = kmalloc(5000, KMALLOC_CONT, &term);
+	unsigned char *a3 = kmalloc(100, KMALLOC_CONT, &term);
+	term_printf(&term, "Deb: phy 0x%x  ; end: 0x%x\n", virt_to_phy(a2), virt_to_phy(a2+4500));
 
 	/*
 	if(err = sd_init(&card)) {
