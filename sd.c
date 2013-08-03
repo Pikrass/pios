@@ -66,7 +66,7 @@ int sd_init(struct sd_card *card) {
 
 		powerup = (*RESP0 & 0x80000000);
 	}
-	card->type = *RESP0 & 40000000;
+	card->type = *RESP0 & 0x40000000;
 
 	// Send CMD2 to get the CID
 	if(sd_send_command(CMD_ALL_SEND_CID, CMD_RSPNS_136, 0))
