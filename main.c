@@ -1,8 +1,9 @@
+#include "mem.h"
 #include "screen.h"
 #include "term.h"
 #include "led.h"
 #include "sd.h"
-#include "mem.h"
+#include "mbr.h"
 
 #define WELCOME "Welcome to Pios, the little program wishing to become a " \
                 "full operating system some day. But for now it barely " \
@@ -46,15 +47,16 @@ void main() {
 	int size = (card.csd.c_size + 1) << (card.csd.c_size_mult + card.csd.read_bl_len + 2);
 	term_printf(&term, "SD card initialized: capacity 0x%x (block 0x%x)\n", size, card.csd.read_bl_len);
 
-	unsigned int *dest = kmalloc(512, KMALLOC_CONT);
+	struct mbr *mbr = kmalloc(512, KMALLOC_CONT);
 
-	if(err = sd_read(&card, 0, 1, dest)) {
+	if(err = sd_read(&card, 0, 1, mbr)) {
 		term_printf(&term, "SD read failed (%x)\n", err);
 		goto error;
 	}
 
 	term_printf(&term, "SD read completed\n");
-	term_printf(&term, "First bytes = %x %x %x %x\n", dest[0], dest[1], dest[2], dest[3]);
+	struct partition *parts = kmalloc(4 * sizeof(struct partition), 0);
+	parse_partition_table(mbr, parts);
 
 	led_pattern(0b00011111, 8, 0x400000, 0);
 
