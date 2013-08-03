@@ -156,7 +156,5 @@ int sd_read(struct sd_card *card, int start, int len, void *dest) {
 	ctrl.stride = 0;
 	ctrl.nextconbk = 0;
 
-	dma_reset(DMA_CHAN_EMMC);
-
 	return dma_initiate(DMA_CHAN_EMMC, &ctrl);
 }

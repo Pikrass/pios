@@ -2,6 +2,7 @@
 #include "screen.h"
 #include "term.h"
 #include "led.h"
+#include "dma.h"
 #include "sd.h"
 #include "mbr.h"
 
@@ -38,6 +39,8 @@ void main() {
 	term_init(fb, 1024, 768, 3);
 	term_create(fb + 211*1024*3, 100, 20, &term);
 	term_printf(&term, WELCOME);
+
+	dma_reset(DMA_CHAN_EMMC);
 
 	if(err = sd_init(&card)) {
 		term_printf(&term, "SD card initialization failed (%x)\n", err);
