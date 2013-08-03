@@ -3,7 +3,7 @@
 
 #include "mem.h"
 #include "dma.h"
-#include "term.h"
+#include "barrier.h"
 
 void idle(int ms) {
 	// These are not real milliseconds :)
@@ -140,6 +140,7 @@ int sd_read(struct sd_card *card, int start, int len, void *dest) {
 	if(card->type == 0)
 		start *= 512;
 
+	dmb();
 	*BLKSIZECNT = BLKSIZE(512) | BLKCNT(len);
 
 	sd_send_command(CMD_READ_MULTIPLE_BLOCK,
