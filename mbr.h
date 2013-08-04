@@ -1,6 +1,8 @@
 #ifndef MBR_H
 #define MBR_H
 
+#define PARTTYPE_FAT32 0x0b
+
 struct mbr_part_entry {
 	unsigned char status;
 	unsigned char chs_start[3];

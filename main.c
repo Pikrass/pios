@@ -5,6 +5,7 @@
 #include "dma.h"
 #include "sd.h"
 #include "mbr.h"
+#include "fat32.h"
 
 #define WELCOME "Welcome to Pios, the little program wishing to become a " \
                 "full operating system some day. But for now it barely " \
@@ -60,6 +61,26 @@ void main() {
 	term_printf(&term, "SD read completed\n");
 	struct partition *parts = kmalloc(4 * sizeof(struct partition), 0);
 	parse_partition_table(mbr, parts);
+
+	struct fat **fat_parts = kmalloc(4 * sizeof(struct fat*), 0);
+
+	for(int i=0 ; i<4 ; ++i) {
+		fat_parts[i] = NULL;
+
+		if(parts[i].size == 0)
+			continue;
+		if(parts[i].type != PARTTYPE_FAT32) {
+			term_printf(&term, "Partition %x is of type 0x%x\n", i);
+			continue;
+		}
+
+		struct fat *fat = kmalloc(sizeof(struct fat), 0);
+		fat32_init(&card, parts[i].start, fat);
+		fat_parts[i] = fat;
+
+		term_printf(&term, "Partition %x is fat32: sec_len 0x%x clu_len 0x%x fat_len 0x%x root 0x%x\n",
+			i, fat->sector_len, fat->cluster_len, fat->fat_len, fat->root);
+	}
 
 	led_pattern(0b00011111, 8, 0x400000, 0);
 
