@@ -245,7 +245,6 @@ void *kmalloc_wilderness(struct kheap_chunk *chunk, struct kheap_chunk **prev_li
 			// Move the wilderness chunk to the boundary
 			struct kheap_chunk *prev = chunk;
 			chunk = (struct kheap_chunk*)(kheap_brk - 8);
-			chunk->next_free = NULL;
 
 			prev->size = (unsigned int)chunk - (unsigned int)prev + 1;
 			if(prev->size >= 17) {
@@ -256,6 +255,8 @@ void *kmalloc_wilderness(struct kheap_chunk *chunk, struct kheap_chunk **prev_li
 			// Allocate enough pages
 			if(kheap_grow(bytes / 0x1000 + 1))
 				return NULL;
+
+			chunk->next_free = NULL;
 		}
 		else {
 			while(remain - 8 < bytes) {
