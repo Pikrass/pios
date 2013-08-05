@@ -80,6 +80,8 @@ void main() {
 
 		term_printf(&term, "Partition %x is fat32: sec_len 0x%x clu_len 0x%x fat_len 0x%x root 0x%x\n",
 			i, fat->sector_len, fat->cluster_len, fat->fat_len, fat->root);
+
+		fat32_printdir(fat, fat->root, &term);
 	}
 
 	led_pattern(0b00011111, 8, 0x400000, 0);
