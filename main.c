@@ -2,6 +2,7 @@
 #include "screen.h"
 #include "term.h"
 #include "led.h"
+#include "exception.h"
 #include "dma.h"
 #include "sd.h"
 #include "mbr.h"
@@ -13,6 +14,7 @@
  
 
 void *get_logo();
+struct terminfo term_dbg;
 
 void main() __attribute__((noreturn));
 
@@ -23,6 +25,7 @@ void main() {
 	struct sd_card card;
 
 	mem_init();
+	exception_init();
 
 	fb = fb_request(1024, 762, 24);
 	if(fb == 0)
@@ -39,6 +42,7 @@ void main() {
 
 	term_init(fb, 1024, 768, 3);
 	term_create(fb + 211*1024*3, 100, 20, &term);
+	term_create(fb + 500*3, 20, 5, &term_dbg);
 	term_printf(&term, WELCOME);
 
 	dma_reset(DMA_CHAN_EMMC);

@@ -30,8 +30,13 @@ struct kheap_chunk {
 };
 
 void mem_init();
+
 void *kmalloc(size_t bytes, unsigned int flags);
-void map_section(unsigned int phy, unsigned int virt, unsigned int flags);
+
+void *alloc_phy_pages(size_t num);
 void *virt_to_phy(void *va);
+
+void map_section(unsigned int phy, unsigned int virt, unsigned int flags);
+int map_page(unsigned int phy, unsigned int virt, unsigned int flags);
 
 #endif
