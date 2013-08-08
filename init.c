@@ -1,3 +1,5 @@
+#include "mem.h"
+
 extern void *__etext, *__data, *__edata;
 
 void init() __attribute__((noreturn,naked));
@@ -37,39 +39,39 @@ void init() {
 
 	// Produce a 1:1 mapping for pages 0 (irpt/excpt vectors, ATAGS) and 8
 	// (this init code)
-	t1_000[0] = 0x2a;
-	t1_000[8] = 0x821a;
+	t1_000[0] = 0x0 | PAGE_RW_NO | 2;
+	t1_000[8] = 0x8000 | PAGE_RO_NO | 2;
 
 	// Map the top table to 0xf0000000 - 0xf0003fff
 	for(int i=0 ; i<4 ; i++) {
-		t1_f00[i] = (unsigned int)((void*)t0 + i*0x1000) | 0x12;
+		t1_f00[i] = (unsigned int)((void*)t0 + i*0x1000) | PAGE_RW_NO | PAGE_XN | 2;
 	}
 
 	// Map the second-level tables to 0xf0004000 - 0xf0004fff
-	t1_f00[4] = (unsigned int)((void*)t1_f00) | 0x12;
+	t1_f00[4] = (unsigned int)((void*)t1_f00) | PAGE_RW_NO | PAGE_XN | 2;
 
 	// Map c0000000 to 9000, for as many pages as needed up to __etext
 	unsigned int last_text_page = ((unsigned int)&__etext & ~0xc0000000) >> 12;
 	int page;
 	for(page=0 ; page <= last_text_page ; ++page) {
-		t1_c00[page] = (0x9000 + page*0x1000) | 0x21a;
+		t1_c00[page] = (0x9000 + page*0x1000) | PAGE_RW_NO | 2;
 	}
 
 	// Map data pages
 	unsigned int last_data_page = ((unsigned int)&__edata & ~0xc0000000) >> 12;
 	for( ; page <= last_data_page ; ++page) {
-		t1_c00[page] = (0x9000 + page*0x1000) | 0x21b;
+		t1_c00[page] = (0x9000 + page*0x1000) | PAGE_RW_NO | PAGE_XN | 2;
 	}
 
 	// Allocate a page for the kernel stack
-	t1_eff[0xff] = (unsigned int)((void*)t1_000 + 0x1000) | 0x21b;
+	t1_eff[0xff] = (unsigned int)((void*)t1_000 + 0x1000) | PAGE_RW_NO | PAGE_XN | 2;
 
 	// Allocate two pages for the kernel initial heap
 	for(int i=0 ; i < 2 ; ++i)
-		t1_c00[page++] = (unsigned int)((void*)t1_000 + 0x2000 + i*0x1000) | 0x213;
+		t1_c00[page++] = (unsigned int)((void*)t1_000 + 0x2000 + i*0x1000) | PAGE_RW_NO | PAGE_XN | 2;
 
 	// Setup domain 0
-	__asm("mcr p15, 0, %[val], c3, c0, 0" : : [val] "r" (3));
+	__asm("mcr p15, 0, %[val], c3, c0, 0" : : [val] "r" (1));
 
 	// Register our table
 	__asm("mcr p15, 0, %[table], c2, c0, 0" : : [table] "r" (t0));
