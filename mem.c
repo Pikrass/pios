@@ -320,12 +320,12 @@ int map_page(unsigned int phy, unsigned int virt, unsigned int flags) {
 	switch(section & 3) {
 		case 0:
 			coarse_table_phy = alloc_coarse_table();
-			coarse_table = map_page_tmp((unsigned int)coarse_table_phy, PAGE_RO_NO | PAGE_XN);
+			coarse_table = map_page_tmp((unsigned int)coarse_table_phy, PAGE_RW_NO | PAGE_XN);
 			coarse_table = (unsigned int*)((unsigned int)coarse_table | ((unsigned int)coarse_table_phy & 0xc00));
 			TOP_TABLE[virt>>20] = (unsigned int)coarse_table_phy | 1;
 			break;
 		case 1:
-			coarse_table = map_page_tmp(section, PAGE_RO_NO | PAGE_XN);
+			coarse_table = map_page_tmp(section, PAGE_RW_NO | PAGE_XN);
 			coarse_table = (unsigned int*)((unsigned int)coarse_table | (section & 0xc00));
 			break;
 		case 2:
